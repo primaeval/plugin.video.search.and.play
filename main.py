@@ -213,7 +213,7 @@ def title_page(url):
                 #str = "http://www.imdb.com/title/%s/" % imdb_id
                 #f.write(str.encode("utf8"))
                 #f.close()
-                meta_url = 'special://profile/addon_data/plugin.video.search.and.play/Movies.temp/%s.strm' % (imdb_id)                
+                meta_url = 'special://profile/addon_data/plugin.video.search.and.play/Movies.temp/%s.strm' % (imdb_id)
             #log(meta_url)
         if imdbID:
             item = ListItem(label=title,thumbnail=img_url,path=meta_url)
@@ -265,7 +265,7 @@ def title_page(url):
         })
 
     return items
-    
+
 @plugin.route('/movie_search/<title>')
 def movie_search(title):
     if plugin.get_setting('order') == '0':
@@ -275,8 +275,13 @@ def movie_search(title):
     votes = plugin.get_setting('votes')
     if votes:
         votes = "&num_votes=%s," % votes
-    url = "http://www.imdb.com/search/title?count=50&production_status=released&title_type=feature&title=%s%s%s" % (title.replace(' ','+'),sort,votes)
-    results = title_page(url) 
+    genres = plugin.get_setting('genres')
+    if genres:
+        genres = "&genres=%s" % genres
+    url = "http://www.imdb.com/search/title?count=50&production_status=released&title_type=feature&title=%s%s%s%s" % (title.replace(' ','+'),sort,votes,genres)
+    #log(url)
+    #xbmcgui.Dialog().notification("title", genres)
+    results = title_page(url)
     if plugin.get_setting('autoplay') == 'true':
         xbmc.Player().play(results[0]._path)
     return results
@@ -295,8 +300,8 @@ def play(url):
 
 @plugin.route('/execute/<url>')
 def execute(url):
-    xbmc.executebuiltin(url)        
-        
+    xbmc.executebuiltin(url)
+
 @plugin.route('/')
 def index():
     items = []
@@ -313,7 +318,7 @@ def index():
         'path': plugin.url_for('movie_search',title="star wars"),
         'thumbnail':get_icon_path('search'),
 
-    })    
+    })
     return items
 
 

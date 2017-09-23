@@ -4,6 +4,7 @@
 <setting id="autoplay" label="Autoplay Top Title" type="bool" default="false" />
 <setting id="order" label="IMDb Search Order" type="enum" default="1" values="Default|Year" />
 <setting id="votes" label="IMDb Number of Votes" type="number" default="10"  />
+<setting id="genres" label="IMDb Genres (comma seperator)" type="text" default=""  />
 <setting id="catchup.plugin" label="Catchup Addon Id (Meta|MetalliQ)" type="text" default="plugin.video.meta" />
 <setting type="lsep" label="%I imdb id, %Y year, %T title"/>
 <setting id="movie.library.url" label="Custom Movie Library Url" type="bool" default="false" />
