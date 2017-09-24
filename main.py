@@ -195,19 +195,13 @@ def title_page(url):
                 meta_url = "plugin://plugin.video.imdb.search/?action=episode&imdb_id=%s&episode_id=%s&title=%s" % (imdbID,episode_id,vlabel) #TODO
                 id = episode_id
             else:
-                #meta_url = 'plugin://%s/movies/play/imdb/%s/select' % (plugin.get_setting('catchup.plugin').lower(),imdbID)
                 imdb_id = imdbID
                 xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.search.and.play/Movies.temp')
                 f = xbmcvfs.File('special://profile/addon_data/plugin.video.search.and.play/Movies.temp/%s.strm' % (imdb_id), "wb")
                 movie_library_url = plugin.get_setting('movie.library.url')
                 meta_url = plugin.get_setting('movie.library')
                 if movie_library_url == "true" and meta_url:
-                    movie_library_addon = plugin.get_setting('movie.library.addon')
-                    if movie_library_addon:
-                        meta_url = re.sub('plugin://.*?/','plugin://%s/' % movie_library_addon,meta_url)
-                    meta_url = meta_url.replace("%Y",year)
-                    meta_url = meta_url.replace("%I",imdb_id)
-                    meta_url = meta_url.replace("%T",urllib.quote_plus(title))
+                    meta_url = "plugin://plugin.video.search.and.play/play_movie/%s/%s/%s" % (imdb_id,year,urllib.quote_plus(title))
                 else:
                     meta_url = 'plugin://%s/movies/play/imdb/%s/library' % (plugin.get_setting('catchup.plugin').lower(),imdb_id)
                 f.write(meta_url.encode("utf8"))
@@ -268,6 +262,35 @@ def title_page(url):
         })
 
     return items
+
+@plugin.route('/play_movie/<imdb_id>/<year>/<title>')
+def play_movie(imdb_id,year,title):
+    xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.search.and.play/Movies.play')
+    name = 'special://profile/addon_data/plugin.video.search.and.play/Movies.play/%s.strm' % (imdb_id)
+    f = xbmcvfs.File(name, "wb")
+    movie_library_url = plugin.get_setting('movie.library.url')
+    meta_url = plugin.get_setting('movie.library')
+    if movie_library_url == "true" and meta_url:
+        movie_library_addon = plugin.get_setting('movie.library.addon')
+        if movie_library_addon:
+            meta_url = re.sub('plugin://.*?/','plugin://%s/' % movie_library_addon,meta_url)
+        if "%M" in meta_url:
+            what = base64.b64decode('aHR0cHM6Ly9hcGkudGhlbW92aWVkYi5vcmcvMy9maW5kLyVzP2FwaV9rZXk9ZDY5OTkyZWM4MTBkMGY0MTRkM2RlNGEyMjk0Yjg3MDAmbGFuZ3VhZ2U9ZW4tVVMmZXh0ZXJuYWxfc291cmNlPWltZGJfaWQ=')
+            url = what % imdb_id
+            html = requests.get(url).content
+            match = re.search('"id":([0-9]*)',html)
+            if match:
+                id = match.group(1)
+                meta_url = meta_url.replace("%M",id)
+        meta_url = meta_url.replace("%Y",year)
+        meta_url = meta_url.replace("%I",imdb_id)
+        meta_url = meta_url.replace("%T",urllib.quote_plus(title))
+
+    else:
+        meta_url = 'plugin://%s/movies/play/imdb/%s/library' % (plugin.get_setting('catchup.plugin').lower(),imdb_id)
+    f.write(meta_url.encode("utf8"))
+    f.close()
+    xbmc.Player().play(name)
 
 @plugin.route('/movie_search/<title>')
 def movie_search(title):
