@@ -290,7 +290,9 @@ def play_movie(imdb_id,year,title):
         meta_url = 'plugin://%s/movies/play/imdb/%s/library' % (plugin.get_setting('catchup.plugin').lower(),imdb_id)
     f.write(meta_url.encode("utf8"))
     f.close()
-    xbmc.Player().play(name)
+    item = ListItem(label=title,thumbnail=get_icon_path('settings'),path=meta_url)
+    return plugin.set_resolved_url(item)
+
 
 @plugin.route('/movie_search/<title>')
 def movie_search(title):
