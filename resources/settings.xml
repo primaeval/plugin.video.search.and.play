@@ -9,6 +9,7 @@
 <setting type="lsep" label="%I imdb id, %Y year, %T title"/>
 <setting id="movie.library.url" label="Custom Movie Library Url" type="bool" default="false" />
 <setting id="movie.library" label="Movie Library Url" type="text" enable="eq(-1,true)" default="plugin://plugin.video.*/?action=play&amp;imdb=%I&amp;year=%Y&amp;title=%T" />
+<setting id="movie.library.addon" type="addon" label="Movie Url Addon" enable="eq(-2,true)" default="" addontype="xbmc.python.pluginsource"  multiselect="false" />
 <setting type="sep"/>
 <setting id="english" label="English Titles" type="bool" default="false" />
 <setting type="sep"/>

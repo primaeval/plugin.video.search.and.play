@@ -202,6 +202,9 @@ def title_page(url):
                 movie_library_url = plugin.get_setting('movie.library.url')
                 meta_url = plugin.get_setting('movie.library')
                 if movie_library_url == "true" and meta_url:
+                    movie_library_addon = plugin.get_setting('movie.library.addon')
+                    if movie_library_addon:
+                        meta_url = re.sub('plugin://.*?/','plugin://%s/' % movie_library_addon,meta_url)
                     meta_url = meta_url.replace("%Y",year)
                     meta_url = meta_url.replace("%I",imdb_id)
                     meta_url = meta_url.replace("%T",urllib.quote_plus(title))
