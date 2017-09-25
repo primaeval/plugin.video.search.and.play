@@ -263,6 +263,22 @@ def title_page(url):
 
     return items
 
+def trakt_id(imdb_id):
+    from urllib2 import Request, urlopen
+
+    headers = {
+      'Content-Type': 'application/json',
+      'trakt-api-version': '2',
+      'trakt-api-key': base64.b64decode('NDJiYTBhYzg1MDRkYWM3ZjMwODUyNDBiYjIwNWMzNTFiM2UxNDk3MzRkYWU5MjhiOWI2YmU3N2UwZTE0ZmM2Yg==')
+    }
+    request = Request('https://api.trakt.tv/search/imdb/%s' % imdb_id, headers=headers)
+
+    response_body = urlopen(request).read()
+    match = re.search('"trakt":([0-9]*)',response_body)
+    if match:
+        id = match.group(1)
+        return id
+
 @plugin.route('/play_movie/<imdb_id>/<year>/<title>')
 def play_movie(imdb_id,year,title):
     xbmcvfs.mkdirs('special://profile/addon_data/plugin.video.search.and.play/Movies.play')
@@ -272,13 +288,14 @@ def play_movie(imdb_id,year,title):
     number = plugin.get_setting('movie.library.number')
     if number == "0":
         meta_url = plugin.get_setting('movie.library')
-    else:
+        movie_library_addon = plugin.get_setting('movie.library.addon')
+    elif number == "1":
         meta_url = plugin.get_setting('movie.library2')
+        movie_library_addon = plugin.get_setting('movie.library2.addon')
+    else:
+        meta_url = plugin.get_setting('movie.library3')
+        movie_library_addon = plugin.get_setting('movie.library3.addon')
     if movie_library_url == "true" and meta_url:
-        if number == "0":
-            movie_library_addon = plugin.get_setting('movie.library.addon')
-        else:
-            movie_library_addon = plugin.get_setting('movie.library2.addon')
         if movie_library_addon:
             meta_url = re.sub('plugin://.*?/','plugin://%s/' % movie_library_addon,meta_url)
         if "%M" in meta_url:
@@ -289,6 +306,9 @@ def play_movie(imdb_id,year,title):
             if match:
                 id = match.group(1)
                 meta_url = meta_url.replace("%M",id)
+        if "%K" in meta_url:
+            trakt = trakt_id(imdb_id)
+            meta_url = meta_url.replace("%K",trakt)
         meta_url = meta_url.replace("%Y",year)
         meta_url = meta_url.replace("%I",imdb_id)
         meta_url = meta_url.replace("%T",urllib.quote_plus(title))
