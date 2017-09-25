@@ -323,21 +323,37 @@ def play_movie(imdb_id,year,title):
 
 @plugin.route('/movie_search/<title>')
 def movie_search(title):
-    if plugin.get_setting('order') == '0':
-        sort = ""
+    autoplay = False
+    if title in ["latest movies", "latest films"]:
+        url = 'http://www.imdb.com/search/title?num_votes=100,&production_status=released&title_type=feature&user_rating=5.0,'
+    elif title.startswith("movies starring" ):
+        who = '_'.join(title.split()[2:]).lower()
+        html = requests.get('https://v2.sg.media-imdb.com/suggests/names/%s/%s.json' % (who[0],who),headers=headers).content
+        match = re.search('"id":"(nm[0-9]*)"',html)
+        if match:
+            id = match.group(1)
+            url = "http://www.imdb.com/search/title?count=50&production_status=released&title_type=feature&role=%s" % id
+        else:
+            return
+    elif title.endswith("movies"):
+        genre = '_'.join(title.split()[:-1]).lower()
+        url = "http://www.imdb.com/search/title?count=50&production_status=released&title_type=feature&genres=%s" % genre
     else:
-        sort = "&sort=year,asc"
-    votes = plugin.get_setting('votes')
-    if votes:
-        votes = "&num_votes=%s," % votes
-    genres = plugin.get_setting('genres')
-    if genres:
-        genres = "&genres=%s" % genres
-    url = "http://www.imdb.com/search/title?count=50&production_status=released&title_type=feature&title=%s%s%s%s" % (title.replace(' ','+'),sort,votes,genres)
-    #log(url)
+        autoplay = True
+        if plugin.get_setting('order') == '0':
+            sort = ""
+        else:
+            sort = "&sort=year,asc"
+        votes = plugin.get_setting('votes')
+        if votes:
+            votes = "&num_votes=%s," % votes
+        genres = plugin.get_setting('genres')
+        if genres:
+            genres = "&genres=%s" % genres
+        url = "http://www.imdb.com/search/title?count=50&production_status=released&title_type=feature&title=%s%s%s%s" % (title.replace(' ','+'),sort,votes,genres)
     #xbmcgui.Dialog().notification("title", genres)
     results = title_page(url)
-    if plugin.get_setting('autoplay') == 'true':
+    if autoplay and plugin.get_setting('autoplay') == 'true':
         xbmc.Player().play(results[0]._path)
     return results
 
