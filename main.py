@@ -269,9 +269,16 @@ def play_movie(imdb_id,year,title):
     name = 'special://profile/addon_data/plugin.video.search.and.play/Movies.play/%s.strm' % (imdb_id)
     f = xbmcvfs.File(name, "wb")
     movie_library_url = plugin.get_setting('movie.library.url')
-    meta_url = plugin.get_setting('movie.library')
+    number = plugin.get_setting('movie.library.number')
+    if number == "0":
+        meta_url = plugin.get_setting('movie.library')
+    else:
+        meta_url = plugin.get_setting('movie.library2')
     if movie_library_url == "true" and meta_url:
-        movie_library_addon = plugin.get_setting('movie.library.addon')
+        if number == "0":
+            movie_library_addon = plugin.get_setting('movie.library.addon')
+        else:
+            movie_library_addon = plugin.get_setting('movie.library2.addon')
         if movie_library_addon:
             meta_url = re.sub('plugin://.*?/','plugin://%s/' % movie_library_addon,meta_url)
         if "%M" in meta_url:
