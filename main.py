@@ -334,60 +334,100 @@ def movie_search(title):
     # movies starring brad pitt
     # movies about berlin
     # movies filmed in berlin
+    # best recent sci-fi movies called star wars about paris filmed in berlin starring brad pitt
     autoplay = False
     language = "&languages=en"
-    if title.startswith("good"):
+
+    if title.startswith("awful") or title.startswith("worst"):
         title = ' '.join(title.split()[1:])
-        rating = "&user_rating=6.0,&num_votes=10,"
+        rating = "&user_rating=,3.0"
+    elif title.startswith("bad"):
+        title = ' '.join(title.split()[1:])
+        rating = "&user_rating=,5.0"
+    elif title.startswith("good"):
+        title = ' '.join(title.split()[1:])
+        rating = "&user_rating=6.0,"
     elif title.startswith("best"):
         title = ' '.join(title.split()[1:])
-        rating = "&user_rating=7.0,&num_votes=100,"
+        rating = "&user_rating=7.0,"
     else:
         rating = ""
+
+    votes = plugin.get_setting('votes')
+    if votes:
+        votes = "&num_votes=%s," % votes
+
     if title.startswith("recent"):
         title = ' '.join(title.split()[1:])
         days=365
         since = (datetime.datetime.now() - datetime.timedelta(days = int(days))).strftime('%Y-%m-%d')
         recent = "&release_date=%s," % since
+    elif title.startswith("latest"):
+        title = ' '.join(title.split()[1:])
+        days=90
+        since = (datetime.datetime.now() - datetime.timedelta(days = int(days))).strftime('%Y-%m-%d')
+        recent = "&release_date=%s," % since
     else:
         recent = ""
-    if title in ["latest movies","recent movies"]:
-        url = 'http://www.imdb.com/search/title?num_votes=100,&production_status=released&title_type=feature'
-    elif title.startswith("movies starring" ):
-        who = '_'.join(title.split()[2:]).lower()
+
+    found_genre = ""
+    genres = ["action", "adventure", "animation", "biography",  "comedy", "crime", "documentary", "drama", "family", "fantasy", "film noir", "game show", "history", "horror", "music", "musical", "mystery", "news", "reality tv", "romance", "sci-fi", "sport", "talk show", "thriller", "war", "western"]
+    for g in genres:
+        search = g + ' ' + "movies"
+        if title.startswith(search):
+            found_genre = g
+            title = title.replace(search,'')
+            break
+    if found_genre:
+        g = found_genre.replace('-','_').replace(' ','_')
+        genre = "&genres=%s" % g
+    else:
+        genre = ""
+    extra_genres = plugin.get_setting('genres')
+    if extra_genres:
+        if genre:
+            genre = genre + ',' + extra_genres
+        else:
+            genre = "&genres=%s" % extra_genres
+
+    role = ""
+    if "starring" in title:
+        title,who = title.split('starring')
+        title = title.strip()
+        who = who.strip().lower().replace(' ','_')
         html = requests.get('https://v2.sg.media-imdb.com/suggests/names/%s/%s.json' % (who[0],who),headers=headers).content
         match = re.search('"id":"(nm[0-9]*)"',html)
         if match:
             id = match.group(1)
-            url = "http://www.imdb.com/search/title?count=50&production_status=released&title_type=feature&role=%s" % id
-        else:
-            return
-    elif title.startswith("movies about" ):
-        who = '_'.join(title.split()[2:]).lower()
-        url = "http://www.imdb.com/search/title?count=50&production_status=released&title_type=feature&plot=%s" % who
-    elif title.startswith("movies filmed in" ):
-        who = '_'.join(title.split()[3:]).lower()
-        url = "http://www.imdb.com/search/title?count=50&production_status=released&title_type=feature&locations=%s" % who
-    elif title.endswith("movies"):
-        genre = '_'.join(title.split()[:-1]).lower()
-        url = "http://www.imdb.com/search/title?count=50&production_status=released&title_type=feature&genres=%s" % (genre)
-    else:
+            role = "&role=%s" % id
+
+
+    location = ""
+    if "filmed in"  in title:
+        title,where = title.split('filmed in')
+        title = title.strip()
+        where = where.strip().lower().replace(' ','+')
+        location = "&locations=%s" % where
+
+    plot = ""
+    if "containing the words"  in title:
+        title,words = title.split('containing the words')
+        title = title.strip()
+        words = words.strip().lower().replace(' ','+')
+        plot = "&plot=%s" % words
+
+    sort = ""
+    if title == "movies":
+        title = ""
+    if title:
+        title = "&title=%s" % title.replace(' ','+')
         autoplay = True
-        if plugin.get_setting('order') == '0':
-            sort = ""
-        else:
+        if plugin.get_setting('order') == '1':
             sort = "&sort=year,asc"
-        votes = plugin.get_setting('votes')
-        if votes:
-            votes = "&num_votes=%s," % votes
-        genres = plugin.get_setting('genres')
-        if genres:
-            genres = "&genres=%s" % genres
-        url = "http://www.imdb.com/search/title?count=50&production_status=released&title_type=feature&title=%s%s%s%s" % (title.replace(' ','+'),sort,votes,genres)
-    if recent:
-        url = url + recent + rating + language
+
+    url = "http://www.imdb.com/search/title?count=50&production_status=released&title_type=feature"
+    url = url + recent + rating + language + genre + role + location + plot + votes + sort + title
     #xbmcgui.Dialog().notification("title", genres)
-    #log(url)
     results = title_page(url)
     if autoplay and plugin.get_setting('autoplay') == 'true':
         xbmc.Player().play(results[0]._path)
@@ -422,6 +462,7 @@ def index():
     items.append(
     {
         'label': "Test Simple Movie Title Search (Star Wars)",
+        #'path': plugin.url_for('movie_search',title="sci-fi movies containing the words death star filmed in tunisia starring mark hamill"),
         'path': plugin.url_for('movie_search',title="star wars"),
         'thumbnail':get_icon_path('search'),
 
