@@ -417,7 +417,7 @@ def movie_search(title):
         plot = "&plot=%s" % words
 
     sort = ""
-    if title == "movies":
+    if title in ["movies" , "movie"]:
         title = ""
     if title:
         title = "&title=%s" % title.replace(' ','+')
