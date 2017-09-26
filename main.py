@@ -323,7 +323,27 @@ def play_movie(imdb_id,year,title):
 
 @plugin.route('/movie_search/<title>')
 def movie_search(title):
+    # latest|recent movies
+    # star wars
+    # latest star wars movie
+    # recent star wars movies
+    # recent star wars movies sorted by date descending
+    # sci-fi movies
+    # latest sci-fi movies
+    # recent sci-fi movies
+    # movies starring brad pitt
+    # movies about berlin
+    # movies filmed in berlin
     autoplay = False
+    language = "&languages=en"
+    if title.startswith("good"):
+        title = ' '.join(title.split()[1:])
+        rating = "&user_rating=6.0,&num_votes=10,"
+    elif title.startswith("best"):
+        title = ' '.join(title.split()[1:])
+        rating = "&user_rating=7.0,&num_votes=100,"
+    else:
+        rating = ""
     if title.startswith("recent"):
         title = ' '.join(title.split()[1:])
         days=365
@@ -331,8 +351,8 @@ def movie_search(title):
         recent = "&release_date=%s," % since
     else:
         recent = ""
-    if title in ["latest movies"]:
-        url = 'http://www.imdb.com/search/title?num_votes=100,&production_status=released&title_type=feature&user_rating=5.0,'
+    if title in ["latest movies","recent movies"]:
+        url = 'http://www.imdb.com/search/title?num_votes=100,&production_status=released&title_type=feature'
     elif title.startswith("movies starring" ):
         who = '_'.join(title.split()[2:]).lower()
         html = requests.get('https://v2.sg.media-imdb.com/suggests/names/%s/%s.json' % (who[0],who),headers=headers).content
@@ -342,6 +362,12 @@ def movie_search(title):
             url = "http://www.imdb.com/search/title?count=50&production_status=released&title_type=feature&role=%s" % id
         else:
             return
+    elif title.startswith("movies about" ):
+        who = '_'.join(title.split()[2:]).lower()
+        url = "http://www.imdb.com/search/title?count=50&production_status=released&title_type=feature&plot=%s" % who
+    elif title.startswith("movies filmed in" ):
+        who = '_'.join(title.split()[3:]).lower()
+        url = "http://www.imdb.com/search/title?count=50&production_status=released&title_type=feature&locations=%s" % who
     elif title.endswith("movies"):
         genre = '_'.join(title.split()[:-1]).lower()
         url = "http://www.imdb.com/search/title?count=50&production_status=released&title_type=feature&genres=%s" % (genre)
@@ -359,8 +385,9 @@ def movie_search(title):
             genres = "&genres=%s" % genres
         url = "http://www.imdb.com/search/title?count=50&production_status=released&title_type=feature&title=%s%s%s%s" % (title.replace(' ','+'),sort,votes,genres)
     if recent:
-        url = url + recent
+        url = url + recent + rating + language
     #xbmcgui.Dialog().notification("title", genres)
+    #log(url)
     results = title_page(url)
     if autoplay and plugin.get_setting('autoplay') == 'true':
         xbmc.Player().play(results[0]._path)
