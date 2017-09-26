@@ -324,7 +324,14 @@ def play_movie(imdb_id,year,title):
 @plugin.route('/movie_search/<title>')
 def movie_search(title):
     autoplay = False
-    if title in ["latest movies", "latest films"]:
+    if title.startswith("recent"):
+        title = ' '.join(title.split()[1:])
+        days=365
+        since = (datetime.datetime.now() - datetime.timedelta(days = int(days))).strftime('%Y-%m-%d')
+        recent = "&release_date=%s," % since
+    else:
+        recent = ""
+    if title in ["latest movies"]:
         url = 'http://www.imdb.com/search/title?num_votes=100,&production_status=released&title_type=feature&user_rating=5.0,'
     elif title.startswith("movies starring" ):
         who = '_'.join(title.split()[2:]).lower()
@@ -337,7 +344,7 @@ def movie_search(title):
             return
     elif title.endswith("movies"):
         genre = '_'.join(title.split()[:-1]).lower()
-        url = "http://www.imdb.com/search/title?count=50&production_status=released&title_type=feature&genres=%s" % genre
+        url = "http://www.imdb.com/search/title?count=50&production_status=released&title_type=feature&genres=%s" % (genre)
     else:
         autoplay = True
         if plugin.get_setting('order') == '0':
@@ -351,6 +358,8 @@ def movie_search(title):
         if genres:
             genres = "&genres=%s" % genres
         url = "http://www.imdb.com/search/title?count=50&production_status=released&title_type=feature&title=%s%s%s%s" % (title.replace(' ','+'),sort,votes,genres)
+    if recent:
+        url = url + recent
     #xbmcgui.Dialog().notification("title", genres)
     results = title_page(url)
     if autoplay and plugin.get_setting('autoplay') == 'true':
