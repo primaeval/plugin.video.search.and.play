@@ -36,7 +36,7 @@ def addon_id():
     return xbmcaddon.Addon().getAddonInfo('id')
 
 def log(v):
-    xbmc.log(repr(v))
+    xbmc.log(repr(v),xbmc.LOGERROR)
 
 #log(sys.argv)
 
@@ -320,7 +320,6 @@ def play_movie(imdb_id,year,title):
     item = ListItem(label=title,thumbnail=get_icon_path('settings'),path=meta_url)
     return plugin.set_resolved_url(item)
 
-
 @plugin.route('/movie_search/<title>')
 def movie_search(title):
     # latest|recent movies
@@ -332,11 +331,15 @@ def movie_search(title):
     # latest sci-fi movies
     # recent sci-fi movies
     # movies starring brad pitt
-    # movies about berlin
+    # movies with a plot about  berlin
     # movies filmed in berlin
-    # best recent sci-fi movies called star wars about paris filmed in berlin starring brad pitt
+    # best recent sci-fi movies called star wars with a plot about paris filmed in berlin starring brad pitt
     autoplay = False
     language = "&languages=en"
+
+    title = title.lower()
+    if title.startswith("the "):
+        title = ' '.join(title.split()[1:])
 
     if title.startswith("awful") or title.startswith("worst"):
         title = ' '.join(title.split()[1:])
@@ -394,7 +397,7 @@ def movie_search(title):
     if "starring" in title:
         title,who = title.split('starring')
         title = title.strip()
-        who = who.strip().lower().replace(' ','_')
+        who = who.strip().replace(' ','_')
         html = requests.get('https://v2.sg.media-imdb.com/suggests/names/%s/%s.json' % (who[0],who),headers=headers).content
         match = re.search('"id":"(nm[0-9]*)"',html)
         if match:
@@ -406,14 +409,14 @@ def movie_search(title):
     if "filmed in"  in title:
         title,where = title.split('filmed in')
         title = title.strip()
-        where = where.strip().lower().replace(' ','+')
+        where = where.strip().replace(' ','+')
         location = "&locations=%s" % where
 
     plot = ""
-    if "containing the words"  in title:
-        title,words = title.split('containing the words')
+    if "with a plot about"  in title:
+        title,words = title.split('with a plot about')
         title = title.strip()
-        words = words.strip().lower().replace(' ','+')
+        words = words.strip().replace(' ','+')
         plot = "&plot=%s" % words
 
     sort = ""
@@ -427,11 +430,13 @@ def movie_search(title):
 
     url = "http://www.imdb.com/search/title?count=50&production_status=released&title_type=feature"
     url = url + recent + rating + language + genre + role + location + plot + votes + sort + title
+    log(url)
     #xbmcgui.Dialog().notification("title", genres)
     results = title_page(url)
     if autoplay and plugin.get_setting('autoplay') == 'true':
         xbmc.Player().play(results[0]._path)
     return results
+
 
 @plugin.route('/movie_search_dialog')
 def movie_search_dialog():
