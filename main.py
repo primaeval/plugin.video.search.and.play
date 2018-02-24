@@ -320,6 +320,11 @@ def play_movie(imdb_id,year,title):
     item = ListItem(label=title,thumbnail=get_icon_path('settings'),path=meta_url)
     return plugin.set_resolved_url(item)
 
+@plugin.route('/play_movie_play/<imdb_id>/<year>/<title>')
+def play_movie_play(imdb_id,year,title):
+    item = play_movie(imdb_id,year,title)
+    xbmc.Player().play(item[0].get_path())
+
 @plugin.route('/movie_search/<title>')
 def movie_search(title):
     # latest|recent movies
